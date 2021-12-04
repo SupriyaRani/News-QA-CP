@@ -12,3 +12,8 @@ BATCH_SIZE = 64
 BUFFER_SIZE = 20000
 MAX_LENGTH = 100
 EPOCHS = 10
+
+#load data paths
+file_path='data/combined-newsqa-data-v1.json'
+write_path = 'data/qa_data.csv'
+sample_data_path = 'data/sample_data.csv'

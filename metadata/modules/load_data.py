@@ -3,7 +3,7 @@
 import pandas as pd
 import re
 
-class Read:
+class Read():
     def __init__(self):
         pass
 
@@ -11,6 +11,7 @@ class Read:
     def get_data(path):
 
         data = pd.read_csv(path)
+        print(data.head())
         data = data.dropna()
 
         print(data.shape)
