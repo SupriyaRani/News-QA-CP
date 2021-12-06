@@ -15,8 +15,8 @@ from metadata.modules import config
 
 
 
-class news_qa:
-    def __init__(self, text="Hi"):
+class news_qa_read:
+    def __init__(self, text="Read_data"):
         self.doc_text = text
     
     def read_jason(file_path):
@@ -27,7 +27,7 @@ class news_qa:
         return qa_data_table
 
     def load_data(path):
-        questions,paragraph,st_index,en_index = Read.get_data(path=config['sample_data_path'])
+        questions,paragraph,st_index,en_index = Read.get_data(path='data/sample_data.csv')
         return questions,paragraph,st_index,en_index
 
     def preprocess_data(qa_data_table):
@@ -35,12 +35,23 @@ class news_qa:
         #qa_data_table['Question1'] = qa_data_table.Question.apply(pr.preprocess)
         return qa_data_table
     
+class news_qa_preprocess(object):
+    def __init__(self, text="Read_data"):
+        self.doc_text = text
+
+    def preprocess_data(questions):
+        #preprocess = pr.preprocess()
+        questions = questions.apply(pr.preprocess)
+        return questions
+
 
 if __name__ == '__main__':
 
-    news_qa = news_qa()
+    news_qa = news_qa_read()
     print("It's working!")
-    #questions,paragraph,st_index,en_index= news_qa.load_data()
     questions,paragraph,st_index,en_index = news_qa.load_data()
     print(questions,paragraph,st_index,en_index)
+    news_qa_preprocess = news_qa_preprocess(questions)
+    print(news_qa_preprocess)
     
+
