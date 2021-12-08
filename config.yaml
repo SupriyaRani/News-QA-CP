@@ -1,0 +1,7 @@
+version: 1.0.0
+MetaFolder: metadata
+
+#load data paths
+file_path: 'data/combined-newsqa-data-v1.json'
+write_path: 'data/qa_data.csv'
+sample_data_path: 'data/sample_data.csv'
