@@ -12,10 +12,10 @@ class Read():
     def get_data(path):
 
         data = pd.read_csv(path)
-        print(data.head())
+        #print(data.head())
         data = data.dropna()
 
-        print(data.shape)
+        print('Sample data shape:', data.shape)
         questions =data.Question1.str.lower().tolist()
         paragraph = data.paragraph.str.lower().tolist()
         st_index = data.ans_st_index.tolist()
