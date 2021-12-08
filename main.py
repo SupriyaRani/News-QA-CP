@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 from metadata.modules import read_jason_file as rf
 from metadata.modules import preprocess as pr
 from metadata.modules.load_data import Read
-from metadata.models import custom_model
+from metadata.models import custom_model as cm
 from metadata.modules import config
 from metadata.modules import *
 
@@ -52,7 +52,7 @@ class news_qa_preprocess():
         self.doc_text = text
 
     def preprocess_data(questions):
-        #preprocess = pr.preprocess()
+        pr.process_text()
         questions = questions.apply(pr.preprocess)
         return questions
 
@@ -63,9 +63,14 @@ if __name__ == '__main__':
     print("It's working!")
     questions,paragraph,st_index,en_index = news_qa.load_data()
     #print(questions,paragraph,st_index,en_index)
-    print('done')
+    print('Data is loaded')
     news_qa_preprocess = news_qa_preprocess(questions)
-    print('preprocess')
-    print(questions)
+    print('preprocessed')
+    cm.main(q_data=questions,p_data=paragraph,ans_st_index=st_index)
+    print('modeled')
+
+
+
+
     
 

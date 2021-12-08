@@ -23,16 +23,6 @@ def preprocess(sent):
     output = preprocess_string(sent, CUSTOM_FILTERS)
     return(' '.join(output))
 
-def load_json(file_path_):
-    data = {}
-    if os.path.exists(file_path_):
-        with open(file_path_, 'r', encoding="cp866") as input_file:
-            file = input_file.read()
-            data = json.loads(file)
-    else:
-        raise FileExistsError('It seems given path does not have required question answer file.')
-    return(data)
-
 def load_pickle(file_name):
     token = joblib.load(filename=file_name)
     return(token)
