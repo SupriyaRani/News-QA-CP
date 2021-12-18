@@ -1,0 +1,49 @@
+import matplotlib.pyplot as plt
+import os
+import re
+import string
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from transformers import BertTokenizer, TFBertModel, BertConfig, BertTokenizerFast 
+print(tf.__version__)
+
+def create_model():
+    PATH = '../input/spanbert-pt/spanbert-base-cased/'
+    encoder = TFBertModel.from_pretrained(PATH, from_pt = True)
+    
+## QA Model
+    input_ids = layers.Input(shape=(max_len ,), dtype=tf.int32)
+    token_type_ids = layers.Input(shape=(max_len,), dtype=tf.int32)
+    attention_mask = layers.Input(shape=(max_len,), dtype=tf.int32)
+    embedding = encoder(
+         input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask
+    )[0]
+        
+
+    start_logits = layers.Dropout(0.3)(embedding)
+    start_logits = layers.Conv1D(128,2,padding='same')(start_logits)
+    start_logits = layers.LeakyReLU()(start_logits)
+    start_logits = layers.Conv1D(64,2,padding='same')(start_logits)
+    start_logits = layers.Dense(1, name="start_logit")(start_logits)
+    start_logits = layers.Flatten()(start_logits)
+
+    end_logits = layers.Dropout(0.3)(embedding)
+    end_logits = layers.Conv1D(128,2,padding='same')(end_logits)
+    end_logits = layers.LeakyReLU()(end_logits)
+    end_logits = layers.Conv1D(64,2,padding='same')(end_logits)
+    end_logits = layers.Dense(1, name="end_logit")(end_logits)
+    end_logits = layers.Flatten()(end_logits)
+
+    start_probs = layers.Activation(keras.activations.softmax)(start_logits)
+    end_probs = layers.Activation(keras.activations.softmax)(end_logits)
+
+    model = keras.Model(
+        inputs=[input_ids, token_type_ids, attention_mask],
+        outputs=[start_probs, end_probs],
+    )
+    loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    optimizer = keras.optimizers.Adam(lr=5e-5)
+    model.compile(optimizer=optimizer, loss=[loss, loss])
+    return model
