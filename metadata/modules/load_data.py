@@ -18,7 +18,7 @@ class Read():
         print('Sample data shape:', data.shape)
         questions =data.Question1.str.lower().tolist()
         paragraph = data.paragraph.str.lower().tolist()
-        st_index = data.ans_st_index.tolist()
+        st_index = data.ans_st_index.values
         en_index = data.ans_en_index.tolist()
 
         #questions_pr = [q.split("\n") for q in questions]

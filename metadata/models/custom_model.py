@@ -4,11 +4,13 @@ FILTERS = '!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n'
 LOWER_CASE = True
 MAX_LEN = 300
 EMBED_SIZE = 200
+NUM_WORDS=20000
 import tensorflow as tf
 from tensorflow.keras.layers import LSTM, Bidirectional, GlobalMaxPooling1D
 from tensorflow.keras.layers import SpatialDropout1D, Dense, Dropout, Input, concatenate, Embedding
 from sklearn.preprocessing import LabelEncoder
-
+from transformers import AdamW
+from tensorflow import keras
 
 import numpy as np
 
@@ -16,7 +18,7 @@ def define_tokenizer(q_sent,p_sent):
     sentences = p_sent+q_sent
     tokenizer = tf.keras.preprocessing.text.Tokenizer(
         filters=FILTERS,
-        lower=LOWER_CASE
+        lower=LOWER_CASE,num_words=NUM_WORDS
     )
     tokenizer.fit_on_texts(sentences)
     return tokenizer
@@ -54,7 +56,7 @@ def get_embedding(tokenizer,emb_dim,embedding_dict):
             continue
 
         emb_vec = embedding_dict.get(word)
-
+        
         if emb_vec is not None:
             embedding_matrix[i] = emb_vec
     return(embedding_matrix)
@@ -65,11 +67,8 @@ def lvl_encoding(y):
     return(y)
 
 def build_model(tokenizer,emb_matrix,questons, paragraph,ans_st_index,nclass):
-
-    
-
     print('Embedding Layer...')
-    embedding = Embedding(
+    embedding = tf.keras.layers.Embedding(
         len(tokenizer.word_index) + 1,
         EMBED_SIZE,
         embeddings_initializer=tf.keras.initializers.Constant(emb_matrix),
@@ -78,25 +77,20 @@ def build_model(tokenizer,emb_matrix,questons, paragraph,ans_st_index,nclass):
 
     print('Question Input Layer...')
     question_input = Input(shape=(MAX_LEN,))
-    print(1)
-    question_x =embedding(question_input)
-    print(2)
+    question_x =Embedding(input_dim=NUM_WORDS,output_dim = EMBED_SIZE,input_length=MAX_LEN)(question_input)
     question_x = SpatialDropout1D(0.2)(question_x)
-    print(3)
     question_x = Bidirectional(LSTM(20, return_sequences=True))(question_x)
-    print(4)
     question_x = GlobalMaxPooling1D()(question_x)
-    print(5)
 
     print('Answer Input Layer...')
     answer_input = Input(shape=(MAX_LEN,))
-    answer_x = embedding(answer_input)
+    answer_x = Embedding(input_dim=NUM_WORDS,output_dim = EMBED_SIZE,input_length=MAX_LEN)(answer_input)
     answer_x = SpatialDropout1D(0.2)(answer_x)
     answer_x = Bidirectional(LSTM(20, return_sequences=True))(answer_x)
     answer_x = GlobalMaxPooling1D()(answer_x)
 
     print('Combine Q&A...')
-    combined_x = concatenate([question_x, answer_x],axis=0)
+    combined_x = concatenate([question_x, answer_x])
     combined_x = Dense(10, activation='relu')(combined_x)
     combined_x = Dropout(0.5)(combined_x)
     combined_x = Dense(10, activation='relu')(combined_x)
@@ -107,12 +101,12 @@ def build_model(tokenizer,emb_matrix,questons, paragraph,ans_st_index,nclass):
     model = tf.keras.models.Model(inputs=[answer_input, question_input], outputs=output)
 
     loss_object = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction="none")
-
+    
     print('Model Compilation...')
     model.compile(
         loss='categorical_crossentropy',
-        optimizer='adam',
-        metrics=['Accuracy']
+        optimizer=keras.optimizers.Adam(lr=0.01),
+        metrics=['accuracy']
         
     )
     callbacks = [
@@ -121,10 +115,13 @@ def build_model(tokenizer,emb_matrix,questons, paragraph,ans_st_index,nclass):
     ]
 
     print('Model Fit Started...')
+    print(questons.shape)
+    print(paragraph.shape)
+    print(ans_st_index.shape)
     history = model.fit(
         x=[questons, paragraph],
         y=ans_st_index,
-        epochs=5,
+        epochs=20,
         callbacks=callbacks,
         batch_size=32,
         shuffle=True,verbose=1)
@@ -139,14 +136,17 @@ def main(q_data,p_data,ans_st_index):
     print('Paragraph tokenizer running...')
     q_data_1 = encode(q_data, tokenizer)
 
-    ans_st_index = lvl_encoding(ans_st_index)
+    
 
     questons, paragraph = np.array(q_data_1), np.array(p_data_1)
     #ans_st_index = np.array(ans_st_index).reshape(-1,1)
     # ans_st_index = [str(int(i)) for i in ans_st_index]
+    #ans_st_index = ans_st_index.values
+    n_class = len(np.unique(ans_st_index))
+    ans_st_index = lvl_encoding(ans_st_index)
     n_class = len(np.unique(ans_st_index))
 
-    y= tf.keras.utils.to_categorical(ans_st_index)
+    y= tf.keras.utils.to_categorical(ans_st_index,num_classes=n_class)
 
     print(questons.shape)
     print( paragraph.shape)
@@ -154,7 +154,7 @@ def main(q_data,p_data,ans_st_index):
 
     print('Embedding loaded...')
 
-    emb =load_glove('data/glove.6B.200d.txt/glove.6B.200d.txt')
+    emb =load_glove('data/glove.6B.200d/glove.6B.200d.txt')
 
     print('Embedding Matrix created...')
     emb_mat = get_embedding(tokenizer, emb_dim=EMBED_SIZE, embedding_dict=emb)
