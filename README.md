@@ -1,1 +1,1 @@
-# Capstone-Project
+# News CNN dataset
