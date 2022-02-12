@@ -1,1 +1,1 @@
-# News CNN dataset
+# CNN News dataset
